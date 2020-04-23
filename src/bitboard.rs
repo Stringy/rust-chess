@@ -111,6 +111,65 @@ impl Iterator for BitboardIter<'_> {
     }
 }
 
+#[repr(u8)]
+#[derive(Debug)]
+pub enum Rank {
+    One,
+    Two,
+    Three,
+    Four,
+    Five,
+    Six,
+    Seven,
+    Eight,
+}
+
+#[repr(u8)]
+#[derive(Debug)]
+pub enum File {
+    A,
+    B,
+    C,
+    D,
+    E,
+    F,
+    G,
+    H,
+}
+
+///
+/// A type to represent a board position in human-readable terms
+///
+#[derive(Debug, Copy, Clone)]
+pub struct Location {
+    pub rank: Rank,
+    pub file: File,
+}
+
+impl Into<Bitboard> for Location {
+    fn into(self) -> Bitboard {
+        Bitboard(BIT_TABLE[(rank * 8) + file])
+    }
+}
+
+impl Into<Location> for (Rank, File) {
+    fn into(self) -> Location {
+        Location {
+            rank: self.0,
+            file: self.1,
+        }
+    }
+}
+
+impl Into<Location> for (u8, u8) {
+    fn into(self) -> Location {
+        Location {
+            rank: Rank::from(self.0),
+            file: File::from(self.1),
+        }
+    }
+}
+
 ///
 /// Lazy static evaluation to create a table of all bitboards
 /// that contain a single 'on' bit.
