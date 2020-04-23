@@ -1,4 +1,4 @@
-use derive_more::{Add, Sub, BitAnd, BitXor, BitOr, AddAssign, SubAssign, BitXorAssign};
+use derive_more::{Add, AddAssign, BitAnd, BitOr, BitXor, BitXorAssign, Sub, SubAssign};
 use lazy_static::lazy_static;
 
 lazy_static! {
@@ -7,9 +7,19 @@ lazy_static! {
 const UNIVERSE: u64 = std::u64::MAX;
 const EMPTY: u64 = 0;
 
-#[derive(Debug, Copy, Clone, PartialEq,
-Add, Sub, BitAnd, BitXor, BitOr, AddAssign, SubAssign,
-BitXorAssign
+#[derive(
+    Debug,
+    Copy,
+    Clone,
+    PartialEq,
+    Add,
+    Sub,
+    BitAnd,
+    BitXor,
+    BitOr,
+    AddAssign,
+    SubAssign,
+    BitXorAssign,
 )]
 pub struct Bitboard(pub u64);
 
@@ -19,19 +29,20 @@ impl Bitboard {
         const debruijn: u64 = 0x07edd5e59a4e28c2_u64;
 
         #[allow(non_upper_case_globals)]
+        #[rustfmt::skip]
         const indexes: [usize; 64] = [
-            63, 0, 58, 1, 59, 47, 53, 2,
-            60, 39, 48, 27, 54, 33, 42, 3,
+            63,  0, 58,  1, 59, 47, 53,  2,
+            60, 39, 48, 27, 54, 33, 42,  3,
             61, 51, 37, 40, 49, 18, 28, 20,
-            55, 30, 34, 11, 43, 14, 22, 4,
+            55, 30, 34, 11, 43, 14, 22,  4,
             62, 57, 46, 52, 38, 26, 32, 41,
             50, 36, 17, 19, 29, 10, 13, 21,
-            56, 45, 25, 31, 35, 16, 9, 12,
-            44, 24, 15, 8, 23, 7, 6, 5,
+            56, 45, 25, 31, 35, 16,  9, 12,
+            44, 24, 15,  8, 23,  7,  6,  5,
         ];
 
         let n = self.0;
-        let m =  (n & (!n + 1)).wrapping_mul(debruijn);
+        let m = (n & (!n + 1)).wrapping_mul(debruijn);
         indexes[(m >> 58) as usize]
     }
 
@@ -107,8 +118,8 @@ impl Iterator for BitboardIter<'_> {
 /// The resultant array can be quickly indexed for operations
 /// that require activating specific bits on the bitboard
 ///
-fn calculate_bit_table() -> [Bitboard;64] {
-    let mut bits: [Bitboard;64] = [Bitboard(0); 64];
+fn calculate_bit_table() -> [Bitboard; 64] {
+    let mut bits: [Bitboard; 64] = [Bitboard(0); 64];
     for i in 0..64u64 {
         bits[i as usize] = Bitboard(1 << i);
     }
