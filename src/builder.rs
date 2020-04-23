@@ -1,30 +1,90 @@
-use crate::bitboard::Bitboard;
+use crate::bitboard::{Bitboard, Location, Rank};
 use crate::board::Piece;
 
+#[derive(Default)]
 pub struct BitboardBuilder {
     bitboard: Bitboard,
 }
 
 impl BitboardBuilder {
     pub fn new() -> BitboardBuilder {
-        BitboardBuilder {
-            bitboard: Bitboard(0),
-        }
+        BitboardBuilder::default()
     }
 
-    pub fn rank<'a>(&'a mut self, pieces: &[Piece]) -> &'a mut BitboardBuilder {
+    ///
+    /// Sets a particular Rank in the bitboard, replacing it with the specific
+    /// pieces
+    ///
+    /// # Arguments
+    ///
+    /// * `rank` the rank to set within the bitboard
+    /// * `bits` a bit mask that represents the bits to turn on for the rank
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use chess::bitboard::{Rank, Bitboard};
+    /// use chess::builder::BitboardBuilder;
+    ///
+    /// let bitboard = BitboardBuilder::new()
+    ///                 .rank(Rank::One, 0b11110011)
+    ///                 .rank(Rank::Two, 0b11111111)
+    ///                 .board();
+    ///
+    /// assert_eq!(bitboard, Bitboard(0xFFF3));
+    /// ```
+    ///
+    pub fn rank(&mut self, rank: Rank, bits: u8) -> &mut BitboardBuilder {
+        // calculate mask at the correct bit offset for the given rank
+        // (least significant bits => lower rank)
+        let mask = (bits as u64) << ((rank as u64) * 8);
+
+        // zero the bits of that rank, whilst retaining all other bits
+        self.bitboard.0 &= (0xFFu64 << ((rank as u64) * 8)) | self.bitboard.0;
+
+        // apply mask
+        self.bitboard.0 |= mask;
         self
     }
 
-    pub fn square<T: Into<Location> + 'a>(
-        &'a mut self,
+    pub fn file<'a>(&'a mut self, _bits: u8) -> &'a mut BitboardBuilder {
+        // TODO: is this even useful?
+        unimplemented!();
+    }
+
+    ///
+    /// Toggles a specific square on the bitboard
+    ///
+    /// # Arguments
+    ///
+    /// * `location` the location on the board
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use chess::bitboard::{Rank, Bitboard, File};
+    /// use chess::builder::BitboardBuilder;
+    ///
+    /// let bitboard = BitboardBuilder::new()
+    ///                 .square((Rank::One, File::A))
+    ///                 .square((Rank::One, File::H))
+    ///                 .board();
+    ///
+    /// assert_eq!(bitboard, Bitboard(0x81));
+    /// ```
+    ///
+    pub fn square<T: Into<Location>>(
+        &mut self,
         location: T,
-        piece: Piece,
-    ) -> &'a mut BitboardBuilder {
+    ) -> &mut BitboardBuilder {
+        self.bitboard ^= location.into().into();
         self
     }
 
-    pub fn build(&self) -> Bitboard {
+    ///
+    /// Simply retrieves the internal board representation
+    ///
+    pub fn board(&self) -> Bitboard {
         self.bitboard
     }
 }

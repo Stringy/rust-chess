@@ -1,4 +1,8 @@
+use std::fmt;
+use std::fmt::{Debug, Formatter};
+
 use derive_more::{Add, AddAssign, BitAnd, BitOr, BitXor, BitXorAssign, Sub, SubAssign};
+
 use lazy_static::lazy_static;
 
 lazy_static! {
@@ -8,7 +12,6 @@ const UNIVERSE: u64 = std::u64::MAX;
 const EMPTY: u64 = 0;
 
 #[derive(
-    Debug,
     Copy,
     Clone,
     PartialEq,
@@ -20,8 +23,15 @@ const EMPTY: u64 = 0;
     AddAssign,
     SubAssign,
     BitXorAssign,
+    Default
 )]
 pub struct Bitboard(pub u64);
+
+impl Debug for Bitboard {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "Bitboard(0x{:X?})", self.0)
+    }
+}
 
 impl Bitboard {
     pub fn lsb(&self) -> usize {
@@ -112,7 +122,7 @@ impl Iterator for BitboardIter<'_> {
 }
 
 #[repr(u8)]
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum Rank {
     One,
     Two,
@@ -125,7 +135,7 @@ pub enum Rank {
 }
 
 #[repr(u8)]
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum File {
     A,
     B,
@@ -148,24 +158,15 @@ pub struct Location {
 
 impl Into<Bitboard> for Location {
     fn into(self) -> Bitboard {
-        Bitboard(BIT_TABLE[(rank * 8) + file])
+        BIT_TABLE[((self.rank as u8 * 8) + self.file as u8) as usize]
     }
 }
 
 impl Into<Location> for (Rank, File) {
     fn into(self) -> Location {
         Location {
-            rank: self.0,
-            file: self.1,
-        }
-    }
-}
-
-impl Into<Location> for (u8, u8) {
-    fn into(self) -> Location {
-        Location {
-            rank: Rank::from(self.0),
-            file: File::from(self.1),
+            rank: self.0.into(),
+            file: self.1.into(),
         }
     }
 }

@@ -1,6 +1,20 @@
-use crate::bitboard::Bitboard;
-
 use derive_more::BitOr;
+
+use crate::bitboard::{Bitboard, Rank};
+use crate::builder::BitboardBuilder;
+
+const CLASSIC_WHITE_PAWNS: Bitboard   = Bitboard(0xFF00);
+const CLASSIC_WHITE_ROOKS: Bitboard   = Bitboard(0x81);
+const CLASSIC_WHITE_KNIGHTS: Bitboard = Bitboard(0x42);
+const CLASSIC_WHITE_BISHOPS: Bitboard = Bitboard(0x24);
+const CLASSIC_WHITE_QUEEN: Bitboard   = Bitboard(0x10);
+const CLASSIC_WHITE_KING: Bitboard    = Bitboard(0x8);
+const CLASSIC_BLACK_PAWNS: Bitboard   = Bitboard(0xFF000000000000);
+const CLASSIC_BLACK_ROOKS: Bitboard   = Bitboard(0x8100000000000000);
+const CLASSIC_BLACK_KNIGHTS: Bitboard = Bitboard(0x4200000000000000);
+const CLASSIC_BLACK_BISHOPS: Bitboard = Bitboard(0x2400000000000000);
+const CLASSIC_BLACK_QUEEN: Bitboard   = Bitboard(0x800000000000000);
+const CLASSIC_BLACK_KING: Bitboard    = Bitboard(0x1000000000000000);
 
 #[derive(Debug)]
 pub enum Colour {
@@ -8,10 +22,23 @@ pub enum Colour {
     White,
 }
 
+impl Default for Colour {
+    fn default() -> Self {
+        Colour::White
+    }
+}
+
 #[derive(Debug, BitOr)]
 pub enum Castle {
     OO = 1,
     OOO = 2,
+    OOAndOOO = 3
+}
+
+impl Default for Castle {
+    fn default() -> Self {
+        Castle::OOAndOOO
+    }
 }
 
 ///
@@ -95,50 +122,62 @@ pub enum Layout {
 }
 
 impl Board {
-    // pub fn new(layout: Layout) -> Self {
-    //     match layout {
-    //         Layout::Classic => new_classic(),
-    //     }
-    // }
+    pub fn new(layout: Layout) -> Self {
+        match layout {
+            Layout::Classic => Board::new_classic(),
+        }
+    }
 
-    // fn new_classic() -> Self {
-    //     Board {
-    //         white_pieces: Bitboard(),
-    //         black_pieces: Bitboard(),
-    //         occupied: Bitboard(),
-    //         white_pawns: Bitboard(),
-    //         white_rooks: Bitboard(),
-    //         white_knights: Bitboard(),
-    //         white_bishops: Bitboard(),
-    //         white_queens: Bitboard(),
-    //         white_king: Bitboard(),
-    //         black_pawns: Bitboard(),
-    //         black_rooks: Bitboard(),
-    //         black_knights: Bitboard(),
-    //         black_bishops: Bitboard(),
-    //         black_queens: Bitboard(),
-    //         black_king: Bitboard(),
-    //
-    //         next_move: Colour::White,
-    //
-    //         white_castle: Castle::OO | Castle::OOO,
-    //         black_castle: Castle::OO | Castle::OOO,
-    //
-    //         move_count: 0,
-    //         white_pawns_count: 0,
-    //         white_rooks_count: 0,
-    //         white_knights_count: 0,
-    //         white_bishops_count: 0,
-    //         white_queens_count: 0,
-    //         white_king_count: 0,
-    //         black_pawns_count: 0,
-    //         black_rooks_count: 0,
-    //         black_knights_count: 0,
-    //         black_bishops_count: 0,
-    //         black_queens_count: 0,
-    //         black_king_count: 0,
-    //         white_material: 0,
-    //         black_material: 0,
-    //     }
-    // }
+    fn new_classic() -> Self {
+        let white_pieces = BitboardBuilder::new()
+            .rank(Rank::One, 0xFF)
+            .rank(Rank::Two, 0xFF)
+            .board();
+        let black_pieces = BitboardBuilder::new()
+            .rank(Rank::Seven, 0xFF)
+            .rank(Rank::Eight, 0xFF)
+            .board();
+
+        Board {
+            white_pieces,
+            black_pieces,
+            occupied: white_pieces | black_pieces,
+
+            white_pawns: CLASSIC_WHITE_PAWNS,
+            white_rooks: CLASSIC_WHITE_ROOKS,
+            white_knights: CLASSIC_WHITE_KNIGHTS,
+            white_bishops: CLASSIC_WHITE_BISHOPS,
+            white_queens: CLASSIC_WHITE_QUEEN,
+            white_king: CLASSIC_WHITE_KING,
+
+            black_pawns: CLASSIC_BLACK_PAWNS,
+            black_rooks: CLASSIC_BLACK_ROOKS,
+            black_knights: CLASSIC_BLACK_KNIGHTS,
+            black_bishops: CLASSIC_BLACK_BISHOPS,
+            black_queens: CLASSIC_BLACK_QUEEN,
+            black_king: CLASSIC_BLACK_KING,
+
+            next_move: Colour::default(),
+
+            white_castle: Castle::default(),
+            black_castle: Castle::default(),
+
+            move_count: 0,
+            white_pawns_count: 8,
+            white_rooks_count: 2,
+            white_knights_count: 2,
+            white_bishops_count: 2,
+            white_queens_count: 1,
+            white_king_count: 1,
+            black_pawns_count: 8,
+            black_rooks_count: 2,
+            black_knights_count: 2,
+            black_bishops_count: 2,
+            black_queens_count: 1,
+            black_king_count: 1,
+
+            white_material: 0,
+            black_material: 0,
+        }
+    }
 }
