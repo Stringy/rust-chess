@@ -71,6 +71,24 @@ impl Piece {
     // TODO: add conversion between Piece and string repr
 }
 
+#[derive(Debug)]
+pub enum PieceValue {
+    Pawn = 100,
+    Rook = 500,
+    KnightOrBishop = 300,
+    Queen = 900,
+    King = 9999
+}
+
+impl PieceValue {
+    pub fn classic_starting() -> i32 {
+        (PieceValue::Pawn as i32 * 8) +
+            (PieceValue::Rook as i32 * 2) +
+            (PieceValue::KnightOrBishop as i32 * 4) +
+            (PieceValue::Queen as i32)
+    }
+}
+
 #[derive(Default, Debug)]
 pub struct Board {
     pub white_pieces: Bitboard,
@@ -122,12 +140,18 @@ pub enum Layout {
 }
 
 impl Board {
+    ///
+    /// Constructs a new Board, based on a given layout.
+    ///
     pub fn new(layout: Layout) -> Self {
         match layout {
             Layout::Classic => Board::new_classic(),
         }
     }
 
+    ///
+    /// Constructs a chess board based on the classic layout
+    ///
     fn new_classic() -> Self {
         let white_pieces = BitboardBuilder::new()
             .rank(Rank::One, 0xFF)
@@ -176,8 +200,8 @@ impl Board {
             black_queens_count: 1,
             black_king_count: 1,
 
-            white_material: 0,
-            black_material: 0,
+            white_material: PieceValue::classic_starting(),
+            black_material: -PieceValue::classic_starting(),
         }
     }
 }

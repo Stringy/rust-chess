@@ -1,5 +1,4 @@
 use crate::bitboard::{Bitboard, Location, Rank};
-use crate::board::Piece;
 
 #[derive(Default)]
 pub struct BitboardBuilder {

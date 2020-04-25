@@ -7,7 +7,9 @@ use lazy_static::lazy_static;
 
 lazy_static! {
     static ref BIT_TABLE: [Bitboard; 64] = calculate_bit_table();
+    static ref MSB_TABLE: [usize; 256] = calculate_msb_table();
 }
+
 const UNIVERSE: u64 = std::u64::MAX;
 const EMPTY: u64 = 0;
 
@@ -56,12 +58,57 @@ impl Bitboard {
         indexes[(m >> 58) as usize]
     }
 
+    ///
+    /// Calculates the MSB (Most Significant Bit) of the
+    /// Board. Based on Eugene Nalimov's bit scan algorithm.
+    ///
+    /// MSB is returned zero-indexed
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use chess::bitboard::Bitboard;
+    /// let bb = Bitboard(0b010010);
+    /// let expected_msb = 4;
+    /// assert_eq!(bb.msb(), expected_msb);
+    /// ```
+    ///
     pub fn msb(&self) -> usize {
-        0
+        let mut n = self.0;
+
+        //
+        // Scan sections of the integer, increasing the
+        // minimum possible MSB, then return the specific
+        // MSB index based on the current minimum and an
+        // additional offset from the MSB_TABLE
+        //
+
+        let mut result = if n > 0xffffffff {
+            n >>= 32;
+            32
+        } else {
+            0
+        };
+
+        if n > 0xffff {
+            n >>= 16;
+            result += 16;
+        }
+
+        if n > 0xff {
+            n >>= 8;
+            result += 8;
+        }
+
+        result + MSB_TABLE[n as usize]
     }
 
     pub fn iter(&self) -> BitboardIter {
         BitboardIter::new(self)
+    }
+
+    pub fn count(&self) -> usize {
+        self.iter().count()
     }
 }
 
@@ -121,6 +168,34 @@ impl Iterator for BitboardIter<'_> {
     }
 }
 
+impl DoubleEndedIterator for BitboardIter<'_> {
+    ///
+    /// Implementation of next_back will iterate from
+    /// most significant bit downwards (opposite to next())
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use chess::bitboard::Bitboard;
+    /// let bb = Bitboard(0b1010);
+    /// let expected: Vec<usize> = vec![3, 1];
+    /// assert_eq!(bb.iter().rev().collect::<Vec<usize>>(), expected);
+    /// ```
+    ///
+    fn next_back(&mut self) -> Option<Self::Item> {
+        let tmp = *self.0 ^ self.1;
+
+        if tmp != 0.into() {
+            let msb = tmp.msb();
+
+            self.1 ^= BIT_TABLE[msb];
+            Some(msb)
+        } else {
+            None
+        }
+    }
+}
+
 #[repr(u8)]
 #[derive(Debug, Copy, Clone)]
 pub enum Rank {
@@ -165,8 +240,8 @@ impl Into<Bitboard> for Location {
 impl Into<Location> for (Rank, File) {
     fn into(self) -> Location {
         Location {
-            rank: self.0.into(),
-            file: self.1.into(),
+            rank: self.0,
+            file: self.1,
         }
     }
 }
@@ -184,6 +259,37 @@ fn calculate_bit_table() -> [Bitboard; 64] {
         bits[i as usize] = Bitboard(1 << i);
     }
     bits
+}
+
+///
+/// Lazy static evaluation to create table of
+/// Most significant bits, used for Eugene Nalimov's
+/// reverse bit scan
+///
+fn calculate_msb_table() -> [usize; 256] {
+    let mut table: [usize; 256] = [0;256];
+
+    for i in 0..256 {
+        if i > 127 {
+            table[i] = 7
+        } else if i > 63 {
+            table[i] = 6
+        } else if i > 31 {
+            table[i] = 5
+        } else if i > 15 {
+            table[i] = 4
+        } else if i > 7 {
+            table[i] = 3
+        } else if i > 3 {
+            table[i] = 2
+        } else if i > 1 {
+            table[i] = 1
+        } else {
+            table[i] = 0
+        }
+    }
+
+    table
 }
 
 #[cfg(test)]

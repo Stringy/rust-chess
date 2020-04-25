@@ -1,7 +1,9 @@
-
 extern crate chess;
 
+use chess::board::{Board, Layout};
+
 fn main() {
-    println!("Hello, Chess");
+    let board = Board::new(Layout::Classic);
+    println!("{:?}", board);
 }
 
