@@ -1,6 +1,6 @@
 extern crate chess;
 
-use chess::bitboard::{Bitboard, Rank};
+use chess::bitboard::{Rank};
 use chess::builder::BitboardBuilder;
 
 fn main() {

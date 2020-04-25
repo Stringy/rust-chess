@@ -3,18 +3,18 @@ use derive_more::BitOr;
 use crate::bitboard::{Bitboard, Rank};
 use crate::builder::BitboardBuilder;
 
-const CLASSIC_WHITE_PAWNS: Bitboard   = Bitboard(0xFF00);
-const CLASSIC_WHITE_ROOKS: Bitboard   = Bitboard(0x81);
+const CLASSIC_WHITE_PAWNS: Bitboard = Bitboard(0xFF00);
+const CLASSIC_WHITE_ROOKS: Bitboard = Bitboard(0x81);
 const CLASSIC_WHITE_KNIGHTS: Bitboard = Bitboard(0x42);
 const CLASSIC_WHITE_BISHOPS: Bitboard = Bitboard(0x24);
-const CLASSIC_WHITE_QUEEN: Bitboard   = Bitboard(0x10);
-const CLASSIC_WHITE_KING: Bitboard    = Bitboard(0x8);
-const CLASSIC_BLACK_PAWNS: Bitboard   = Bitboard(0xFF000000000000);
-const CLASSIC_BLACK_ROOKS: Bitboard   = Bitboard(0x8100000000000000);
+const CLASSIC_WHITE_QUEEN: Bitboard = Bitboard(0x10);
+const CLASSIC_WHITE_KING: Bitboard = Bitboard(0x8);
+const CLASSIC_BLACK_PAWNS: Bitboard = Bitboard(0xFF000000000000);
+const CLASSIC_BLACK_ROOKS: Bitboard = Bitboard(0x8100000000000000);
 const CLASSIC_BLACK_KNIGHTS: Bitboard = Bitboard(0x4200000000000000);
 const CLASSIC_BLACK_BISHOPS: Bitboard = Bitboard(0x2400000000000000);
-const CLASSIC_BLACK_QUEEN: Bitboard   = Bitboard(0x800000000000000);
-const CLASSIC_BLACK_KING: Bitboard    = Bitboard(0x1000000000000000);
+const CLASSIC_BLACK_QUEEN: Bitboard = Bitboard(0x800000000000000);
+const CLASSIC_BLACK_KING: Bitboard = Bitboard(0x1000000000000000);
 
 #[derive(Debug)]
 pub enum Colour {
@@ -32,7 +32,7 @@ impl Default for Colour {
 pub enum Castle {
     OO = 1,
     OOO = 2,
-    OOAndOOO = 3
+    OOAndOOO = 3,
 }
 
 impl Default for Castle {
@@ -71,21 +71,44 @@ impl Piece {
     // TODO: add conversion between Piece and string repr
 }
 
+impl Into<Piece> for u8 {
+    fn into(self) -> Piece {
+        match self {
+            0 => Piece::Empty,
+            0b0001 => Piece::WhitePawn,
+            0b0010 => Piece::WhiteKing,
+            0b0011 => Piece::WhiteKnight,
+            0b0101 => Piece::WhiteBishop,
+            0b0110 => Piece::WhiteRook,
+            0b0111 => Piece::WhiteQueen,
+
+            0b1001 => Piece::BlackPawn,
+            0b1010 => Piece::BlackKing,
+            0b1011 => Piece::BlackKnight,
+            0b1101 => Piece::BlackBishop,
+            0b1110 => Piece::BlackRook,
+            0b1111 => Piece::BlackQueen,
+
+            _ => panic!(format!("invalid piece value: {:b}", self)),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub enum PieceValue {
     Pawn = 100,
     Rook = 500,
     KnightOrBishop = 300,
     Queen = 900,
-    King = 9999
+    King = 9999,
 }
 
 impl PieceValue {
     pub fn classic_starting() -> i32 {
-        (PieceValue::Pawn as i32 * 8) +
-            (PieceValue::Rook as i32 * 2) +
-            (PieceValue::KnightOrBishop as i32 * 4) +
-            (PieceValue::Queen as i32)
+        (PieceValue::Pawn as i32 * 8)
+            + (PieceValue::Rook as i32 * 2)
+            + (PieceValue::KnightOrBishop as i32 * 4)
+            + (PieceValue::Queen as i32)
     }
 }
 
