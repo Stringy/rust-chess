@@ -1,7 +1,9 @@
 use std::fmt;
 use std::fmt::{Debug, Formatter};
 
-use derive_more::{Add, AddAssign, BitAnd, BitOr, BitXor, BitXorAssign, Sub, SubAssign};
+use derive_more::{
+    Add, AddAssign, BitAnd, BitOr, BitOrAssign, BitXor, BitXorAssign, Sub, SubAssign,
+};
 
 use lazy_static::lazy_static;
 
@@ -22,6 +24,7 @@ const EMPTY: u64 = 0;
     BitAnd,
     BitXor,
     BitOr,
+    BitOrAssign,
     AddAssign,
     SubAssign,
     BitXorAssign,

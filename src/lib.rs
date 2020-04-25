@@ -5,3 +5,5 @@ pub mod bitboard;
 pub mod board;
 pub mod builder;
 pub mod moves;
+
+mod pregen;

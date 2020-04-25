@@ -16,6 +16,17 @@ const CLASSIC_BLACK_BISHOPS: Bitboard = Bitboard(0x2400000000000000);
 const CLASSIC_BLACK_QUEEN: Bitboard = Bitboard(0x800000000000000);
 const CLASSIC_BLACK_KING: Bitboard = Bitboard(0x1000000000000000);
 
+///
+/// Can be used to get the index of an arbitrary
+/// Location on the board (without having to go via board::Location)
+///
+#[macro_export]
+macro_rules! board_idx {
+    ($rank:expr, $file:expr) => {
+        ($rank * 8) + $file
+    };
+}
+
 #[derive(Debug)]
 pub enum Colour {
     Black,
@@ -125,6 +136,22 @@ pub enum Rank {
     Eight,
 }
 
+impl From<u8> for Rank {
+    fn from(n: u8) -> Self {
+        match n {
+            0 => Rank::One,
+            1 => Rank::Two,
+            2 => Rank::Three,
+            3 => Rank::Four,
+            4 => Rank::Five,
+            5 => Rank::Six,
+            6 => Rank::Seven,
+            7 => Rank::Eight,
+            _ => panic!("invalid File value"),
+        }
+    }
+}
+
 #[repr(u8)]
 #[derive(Debug, Copy, Clone)]
 pub enum File {
@@ -136,6 +163,22 @@ pub enum File {
     F,
     G,
     H,
+}
+
+impl From<u8> for File {
+    fn from(n: u8) -> Self {
+        match n {
+            0 => File::A,
+            1 => File::B,
+            2 => File::C,
+            3 => File::D,
+            4 => File::E,
+            5 => File::F,
+            6 => File::G,
+            7 => File::H,
+            _ => panic!("invalid File value"),
+        }
+    }
 }
 
 ///
@@ -158,6 +201,15 @@ impl Into<Location> for (Rank, File) {
         Location {
             rank: self.0,
             file: self.1,
+        }
+    }
+}
+
+impl Into<Location> for (u8, u8) {
+    fn into(self) -> Location {
+        Location {
+            rank: self.0.into(),
+            file: self.1.into(),
         }
     }
 }

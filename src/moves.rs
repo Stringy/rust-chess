@@ -6,11 +6,11 @@ use derive_more::{BitAnd, BitAndAssign, BitOr, BitOrAssign};
 /// on the chess board.
 ///
 /// From least to most significant bits:
-/// 6 bits from index (0..63)
-/// 6 bits to index (0..63)
-/// 4 bits moving piece
-/// 4 bits captured piece
-/// 4 bits promotion piece
+/// * 6 bits from index (0..63)
+/// * 6 bits to index (0..63)
+/// * 4 bits moving piece
+/// * 4 bits captured piece
+/// * 4 bits promotion piece
 ///
 #[derive(Debug, Copy, Clone, BitAnd, BitAndAssign, BitOr, BitOrAssign)]
 pub struct Move(u32);
