@@ -1,5 +1,6 @@
 use crate::bitboard::{Bitboard, BIT_TABLE};
 use crate::board_idx;
+use itertools::Itertools;
 use lazy_static::lazy_static;
 
 pub const DIAG_A8H1_MAGIC: [Bitboard; 15] = [
@@ -93,16 +94,16 @@ lazy_static! {
 ///
 fn calculate_rank_masks() -> [Bitboard; 64] {
     let mut rank_mask = [Bitboard(0); 64];
-    for file in 0..9 {
-        for rank in 0..9 {
-            rank_mask[board_idx!(rank, file)] = BIT_TABLE[board_idx!(rank, 2)]
-                | BIT_TABLE[board_idx!(rank, 3)]
-                | BIT_TABLE[board_idx!(rank, 4)]
-                | BIT_TABLE[board_idx!(rank, 5)]
-                | BIT_TABLE[board_idx!(rank, 6)]
-                | BIT_TABLE[board_idx!(rank, 7)];
-        }
-    }
+
+    (0..8).cartesian_product(0..8).for_each(|rt| {
+        let (file, rank) = rt;
+        rank_mask[board_idx!(rank, file)] = BIT_TABLE[board_idx!(rank, 2)]
+            | BIT_TABLE[board_idx!(rank, 3)]
+            | BIT_TABLE[board_idx!(rank, 4)]
+            | BIT_TABLE[board_idx!(rank, 5)]
+            | BIT_TABLE[board_idx!(rank, 6)]
+            | BIT_TABLE[board_idx!(rank, 7)];
+    });
 
     rank_mask
 }
@@ -112,16 +113,16 @@ fn calculate_rank_masks() -> [Bitboard; 64] {
 ///
 fn calculate_file_masks() -> [Bitboard; 64] {
     let mut file_masks = [Bitboard(0); 64];
-    for file in 0..9 {
-        for rank in 0..9 {
-            file_masks[board_idx!(rank, file)] = BIT_TABLE[board_idx!(2, file)]
-                | BIT_TABLE[board_idx!(3, file)]
-                | BIT_TABLE[board_idx!(4, file)]
-                | BIT_TABLE[board_idx!(5, file)]
-                | BIT_TABLE[board_idx!(6, file)]
-                | BIT_TABLE[board_idx!(7, file)];
-        }
-    }
+
+    (0..8).cartesian_product(0..8).for_each(|rt| {
+        let (file, rank) = rt;
+        file_masks[board_idx!(rank, file)] = BIT_TABLE[board_idx!(2, file)]
+            | BIT_TABLE[board_idx!(3, file)]
+            | BIT_TABLE[board_idx!(4, file)]
+            | BIT_TABLE[board_idx!(5, file)]
+            | BIT_TABLE[board_idx!(6, file)]
+            | BIT_TABLE[board_idx!(7, file)];
+    });
 
     file_masks
 }
@@ -132,24 +133,23 @@ fn calculate_file_masks() -> [Bitboard; 64] {
 fn calculate_a8h1_masks() -> ([Bitboard; 64], [Bitboard; 64]) {
     let mut diag_masks = [Bitboard(0); 64];
     let mut diag_magic = [Bitboard(0); 64];
-    for file in 0..9 {
-        for rank in 0..9 {
-            let diag = rank + file;
-            diag_masks[board_idx!(rank, file)] = DIAG_A8H1_MAGIC[diag - 2];
-            diag_magic[board_idx!(rank, file)] = 0.into();
 
-            if diag < 10 {
-                for sq in 2..diag {
-                    diag_masks[board_idx!(rank, file)] |= BIT_TABLE[board_idx!(diag - sq, sq)];
-                }
-            } else {
-                for sq in 2..diag {
-                    diag_masks[board_idx!(rank, file)] |=
-                        BIT_TABLE[board_idx!(9 - sq, diag + sq - 9)];
-                }
+    (0..8).cartesian_product(0..8).for_each(|rt| {
+        let (file, rank) = rt;
+        let diag = rank + file;
+        diag_masks[board_idx!(rank, file)] = DIAG_A8H1_MAGIC[diag - 2];
+        diag_magic[board_idx!(rank, file)] = 0.into();
+
+        if diag < 10 {
+            for sq in 2..diag {
+                diag_masks[board_idx!(rank, file)] |= BIT_TABLE[board_idx!(diag - sq, sq)];
+            }
+        } else {
+            for sq in 2..diag {
+                diag_masks[board_idx!(rank, file)] |= BIT_TABLE[board_idx!(9 - sq, diag + sq - 9)];
             }
         }
-    }
+    });
 
     (diag_masks, diag_magic)
 }
@@ -160,23 +160,23 @@ fn calculate_a8h1_masks() -> ([Bitboard; 64], [Bitboard; 64]) {
 fn calculate_a1h8_masks() -> ([Bitboard; 64], [Bitboard; 64]) {
     let mut diag_masks = [Bitboard(0); 64];
     let mut diag_magic = [Bitboard(0); 64];
-    for file in 0..9 {
-        for rank in 0..9 {
-            let diag = rank + file;
-            diag_masks[board_idx!(rank, file)] = DIAG_A1H8_MAGIC[diag + 7];
-            diag_magic[board_idx!(rank, file)] = 0.into();
 
-            if diag < 10 {
-                for sq in 2..9 - diag {
-                    diag_masks[board_idx!(rank, file)] |= BIT_TABLE[board_idx!(sq, diag + sq)];
-                }
-            } else {
-                for sq in 2..9 + diag {
-                    diag_masks[board_idx!(rank, file)] |= BIT_TABLE[board_idx!(sq, sq - diag)];
-                }
+    (0..8).cartesian_product(0..8).for_each(|rt| {
+        let (file, rank) = rt;
+        let diag = rank + file;
+        diag_masks[board_idx!(rank, file)] = DIAG_A1H8_MAGIC[diag + 7];
+        diag_magic[board_idx!(rank, file)] = 0.into();
+
+        if diag < 10 {
+            for sq in 2..9 - diag {
+                diag_masks[board_idx!(rank, file)] |= BIT_TABLE[board_idx!(sq, diag + sq)];
+            }
+        } else {
+            for sq in 2..9 + diag {
+                diag_masks[board_idx!(rank, file)] |= BIT_TABLE[board_idx!(sq, sq - diag)];
             }
         }
-    }
+    });
 
     (diag_masks, diag_magic)
 }
@@ -187,11 +187,10 @@ fn calculate_a1h8_masks() -> ([Bitboard; 64], [Bitboard; 64]) {
 fn calculate_file_magic() -> [Bitboard; 64] {
     let mut file_magic = [Bitboard(0); 64];
 
-    for file in 0..9 {
-        for rank in 0..9 {
-            file_magic[board_idx!(rank, file)] = FILE_MAGIC_MASKS[file - 1];
-        }
-    }
+    (0..8).cartesian_product(0..8).for_each(|rt| {
+        let (file, rank) = rt;
+        file_magic[board_idx!(rank, file)] = FILE_MAGIC_MASKS[file - 1];
+    });
 
     file_magic
 }
@@ -203,34 +202,33 @@ fn calculate_file_magic() -> [Bitboard; 64] {
 fn calculate_general_sliding_attacks() -> [[u8; 64]; 8] {
     let mut sliding_attacks = [[0u8; 64]; 8];
 
-    for sq in 0..8 {
-        for state6 in 0..64 {
-            let state8 = state6 << 8;
-            let mut attack = 0u8;
+    (0..8).cartesian_product(0..64).for_each(|st| {
+        let (sq, state6) = st;
+        let state8 = state6 << 8;
+        let mut attack = 0u8;
 
-            if sq < 7 {
-                attack |= 1 << (sq + 1);
-            }
-
-            for slide in sq + 2..8 {
-                if ((1 << (slide - 1)) & !state8) != 0 {
-                    attack |= 1 << slide;
-                }
-            }
-
-            if sq > 0 {
-                attack |= 1 << (sq - 1);
-            }
-
-            for slide in sq + 2..0 {
-                if ((1 << (slide + 1)) & !state8) != 0 {
-                    attack |= 1 << slide;
-                }
-            }
-
-            sliding_attacks[sq][state6] = attack;
+        if sq < 7 {
+            attack |= 1 << (sq + 1);
         }
-    }
+
+        for slide in sq + 2..8 {
+            if ((1 << (slide - 1)) & !state8) != 0 {
+                attack |= 1 << slide;
+            }
+        }
+
+        if sq > 0 {
+            attack |= 1 << (sq - 1);
+        }
+
+        for slide in sq + 2..0 {
+            if ((1 << (slide + 1)) & !state8) != 0 {
+                attack |= 1 << slide;
+            }
+        }
+
+        sliding_attacks[sq][state6] = attack;
+    });
 
     sliding_attacks
 }
@@ -241,14 +239,13 @@ fn calculate_general_sliding_attacks() -> [[u8; 64]; 8] {
 fn calculate_white_pawn_single_moves() -> [Bitboard; 64] {
     let mut moves = [Bitboard(0); 64];
 
-    for file in 0..8 {
-        for rank in 0..8 {
-            let mrank = rank + 1;
-            if mrank != 8 {
-                moves[board_idx!(rank, file)] |= BIT_TABLE[board_idx!(mrank, file)];
-            }
+    (0..8).cartesian_product(0..7).for_each(|rt| {
+        let (file, rank) = rt;
+        let mrank = rank + 1;
+        if mrank != 8 {
+            moves[board_idx!(rank, file)] |= BIT_TABLE[board_idx!(mrank, file)];
         }
-    }
+    });
 
     moves
 }
@@ -273,13 +270,12 @@ fn calculate_white_pawn_double_moves() -> [Bitboard; 64] {
 fn calculate_white_pawn_attacks() -> [Bitboard; 64] {
     let mut attacks = [Bitboard(0); 64];
 
-    for file in 0..8 {
-        for rank in 0..7 {
-            let a_rank = rank + 1;
-            attacks[board_idx!(rank, file)] = BIT_TABLE[board_idx!(a_rank, file + 1)];
-            attacks[board_idx!(rank, file)] = BIT_TABLE[board_idx!(a_rank, file - 1)];
-        }
-    }
+    (0..8).cartesian_product(0..7).for_each(|rt| {
+        let (file, rank) = rt;
+        let a_rank = rank + 1;
+        attacks[board_idx!(rank, file)] = BIT_TABLE[board_idx!(a_rank, file + 1)];
+        attacks[board_idx!(rank, file)] = BIT_TABLE[board_idx!(a_rank, file - 1)];
+    });
 
     attacks
 }
@@ -291,7 +287,7 @@ fn calculate_black_pawn_single_moves() -> [Bitboard; 64] {
     let mut moves = [Bitboard(0); 64];
 
     for file in 0..8 {
-        for rank in 7..0 {
+        for rank in (1..8).rev() {
             moves[board_idx!(rank, file)] |= BIT_TABLE[board_idx!(rank - 1, file)];
         }
     }
@@ -319,13 +315,12 @@ fn calculate_black_pawn_double_moves() -> [Bitboard; 64] {
 fn calculate_black_pawn_attacks() -> [Bitboard; 64] {
     let mut attacks = [Bitboard(0); 64];
 
-    for file in 0..8 {
-        for rank in 7..0 {
-            let a_rank = rank - 1;
-            attacks[board_idx!(rank, file)] = BIT_TABLE[board_idx!(a_rank, file + 1)];
-            attacks[board_idx!(rank, file)] = BIT_TABLE[board_idx!(a_rank, file - 1)];
-        }
-    }
+    (0..8).cartesian_product(0..8).for_each(|rt| {
+        let (file, rank) = rt;
+        let a_rank = rank - 1;
+        attacks[board_idx!(rank, file)] = BIT_TABLE[board_idx!(a_rank, file + 1)];
+        attacks[board_idx!(rank, file)] = BIT_TABLE[board_idx!(a_rank, file - 1)];
+    });
 
     attacks
 }
@@ -336,18 +331,17 @@ fn calculate_black_pawn_attacks() -> [Bitboard; 64] {
 fn calculate_knight_moves() -> [Bitboard; 64] {
     let mut moves = [Bitboard(0); 64];
 
-    for file in 0..8 {
-        for rank in 0..8 {
-            moves[board_idx!(rank, file)] |= BIT_TABLE[board_idx!(rank + 1, file - 2)];
-            moves[board_idx!(rank, file)] |= BIT_TABLE[board_idx!(rank + 2, file - 1)];
-            moves[board_idx!(rank, file)] |= BIT_TABLE[board_idx!(rank + 2, file + 1)];
-            moves[board_idx!(rank, file)] |= BIT_TABLE[board_idx!(rank + 1, file + 2)];
-            moves[board_idx!(rank, file)] |= BIT_TABLE[board_idx!(rank - 1, file + 2)];
-            moves[board_idx!(rank, file)] |= BIT_TABLE[board_idx!(rank - 2, file + 1)];
-            moves[board_idx!(rank, file)] |= BIT_TABLE[board_idx!(rank - 2, file - 1)];
-            moves[board_idx!(rank, file)] |= BIT_TABLE[board_idx!(rank - 1, file - 2)];
-        }
-    }
+    (0..8).cartesian_product(0..8).for_each(|rt| {
+        let (file, rank) = rt;
+        moves[board_idx!(rank, file)] |= BIT_TABLE[board_idx!(rank + 1, file - 2)];
+        moves[board_idx!(rank, file)] |= BIT_TABLE[board_idx!(rank + 2, file - 1)];
+        moves[board_idx!(rank, file)] |= BIT_TABLE[board_idx!(rank + 2, file + 1)];
+        moves[board_idx!(rank, file)] |= BIT_TABLE[board_idx!(rank + 1, file + 2)];
+        moves[board_idx!(rank, file)] |= BIT_TABLE[board_idx!(rank - 1, file + 2)];
+        moves[board_idx!(rank, file)] |= BIT_TABLE[board_idx!(rank - 2, file + 1)];
+        moves[board_idx!(rank, file)] |= BIT_TABLE[board_idx!(rank - 2, file - 1)];
+        moves[board_idx!(rank, file)] |= BIT_TABLE[board_idx!(rank - 1, file - 2)];
+    });
 
     moves
 }
@@ -358,18 +352,17 @@ fn calculate_knight_moves() -> [Bitboard; 64] {
 fn calculate_king_moves() -> [Bitboard; 64] {
     let mut moves = [Bitboard(0); 64];
 
-    for file in 0..8 {
-        for rank in 0..8 {
-            moves[board_idx!(rank, file)] |= BIT_TABLE[board_idx!(rank, file - 1)];
-            moves[board_idx!(rank, file)] |= BIT_TABLE[board_idx!(rank + 1, file - 1)];
-            moves[board_idx!(rank, file)] |= BIT_TABLE[board_idx!(rank + 1, file)];
-            moves[board_idx!(rank, file)] |= BIT_TABLE[board_idx!(rank + 1, file + 1)];
-            moves[board_idx!(rank, file)] |= BIT_TABLE[board_idx!(rank, file + 1)];
-            moves[board_idx!(rank, file)] |= BIT_TABLE[board_idx!(rank - 1, file + 1)];
-            moves[board_idx!(rank, file)] |= BIT_TABLE[board_idx!(rank - 1, file)];
-            moves[board_idx!(rank, file)] |= BIT_TABLE[board_idx!(rank - 1, file - 1)];
-        }
-    }
+    (0..8).cartesian_product(0..8).for_each(|rt| {
+        let (file, rank) = rt;
+        moves[board_idx!(rank, file)] |= BIT_TABLE[board_idx!(rank, file - 1)];
+        moves[board_idx!(rank, file)] |= BIT_TABLE[board_idx!(rank + 1, file - 1)];
+        moves[board_idx!(rank, file)] |= BIT_TABLE[board_idx!(rank + 1, file)];
+        moves[board_idx!(rank, file)] |= BIT_TABLE[board_idx!(rank + 1, file + 1)];
+        moves[board_idx!(rank, file)] |= BIT_TABLE[board_idx!(rank, file + 1)];
+        moves[board_idx!(rank, file)] |= BIT_TABLE[board_idx!(rank - 1, file + 1)];
+        moves[board_idx!(rank, file)] |= BIT_TABLE[board_idx!(rank - 1, file)];
+        moves[board_idx!(rank, file)] |= BIT_TABLE[board_idx!(rank - 1, file - 1)];
+    });
 
     moves
 }
@@ -380,15 +373,14 @@ fn calculate_king_moves() -> [Bitboard; 64] {
 fn calculate_rank_attacks() -> [[Bitboard; 64]; 64] {
     let mut attacks = [[Bitboard(0); 64]; 64];
 
-    for file in 0..8 {
-        for rank in 0..8 {
-            for state in 0..64 {
-                attacks[board_idx!(rank, file)][state] |= ((GEN_SLIDING[file - 1][state] as u64)
-                    << RANK_SHIFT[board_idx!(rank, file) - 1])
-                    .into();
-            }
+    (0..8).cartesian_product(0..8).for_each(|rt| {
+        let (file, rank) = rt;
+        for state in 0..64 {
+            attacks[board_idx!(rank, file)][state] |= ((GEN_SLIDING[file - 1][state] as u64)
+                << RANK_SHIFT[board_idx!(rank, file) - 1])
+                .into();
         }
-    }
+    });
 
     attacks
 }
@@ -399,18 +391,17 @@ fn calculate_rank_attacks() -> [[Bitboard; 64]; 64] {
 fn calculate_file_attacks() -> [[Bitboard; 64]; 64] {
     let mut attacks = [[Bitboard(0); 64]; 64];
 
-    for file in 0..8 {
-        for rank in 0..8 {
-            for state in 0..64 {
-                for attack_bit in 0..9 {
-                    if GEN_SLIDING[8 - rank][state] & (1 << attack_bit) != 0 {
-                        attacks[board_idx!(rank, file)][state] |=
-                            BIT_TABLE[board_idx!(8 - attack_bit, file)];
-                    }
+    (0..8).cartesian_product(0..8).for_each(|rt| {
+        let (file, rank) = rt;
+        for state in 0..64 {
+            for attack_bit in 0..9 {
+                if GEN_SLIDING[8 - rank][state] & (1 << attack_bit) != 0 {
+                    attacks[board_idx!(rank, file)][state] |=
+                        BIT_TABLE[board_idx!(8 - attack_bit, file)];
                 }
             }
         }
-    }
+    });
 
     attacks
 }
@@ -421,54 +412,52 @@ fn calculate_file_attacks() -> [[Bitboard; 64]; 64] {
 fn calculate_a8h1_attacks() -> [[Bitboard; 64]; 64] {
     let mut attacks = [[Bitboard(0); 64]; 64];
 
-    for file in 0..8 {
-        for rank in 0..8 {
-            for state in 0..64 {
-                for attack_bit in 0..8 {
-                    if GEN_SLIDING[board_idx!(8 - rank, file - 1)][state] & (1 << attack_bit) != 0 {
-                        let diag = file + rank;
-                        let (rnk, fle) = if diag < 0 {
-                            (diag - file, attack_bit + 1)
-                        } else {
-                            (8 - attack_bit, diag - rank)
-                        };
+    (0..8).cartesian_product(0..8).for_each(|rt| {
+        let (file, rank) = rt;
+        for state in 0..64 {
+            for attack_bit in 0..8 {
+                if GEN_SLIDING[board_idx!(8 - rank, file - 1)][state] & (1 << attack_bit) != 0 {
+                    let diag = (file + rank) as i32;
+                    let (rnk, fle) = if diag < 0 {
+                        (diag - (file as i32), attack_bit + 1)
+                    } else {
+                        (8 - attack_bit, diag - (rank as i32))
+                    };
 
-                        if fle > 0 && fle < 9 && rnk > 0 && rnk < 9 {
-                            attacks[board_idx!(rank, file)][state] =
-                                BIT_TABLE[board_idx!(rnk, fle)];
-                        }
+                    if fle > 0 && fle < 9 && rnk > 0 && rnk < 9 {
+                        attacks[board_idx!(rank, file)][state] =
+                            BIT_TABLE[board_idx!(rnk, fle) as usize];
                     }
                 }
             }
         }
-    }
+    });
 
     attacks
 }
 fn calculate_a1h8_attacks() -> [[Bitboard; 64]; 64] {
     let mut attacks = [[Bitboard(0); 64]; 64];
 
-    for file in 0..8 {
-        for rank in 0..8 {
-            for state in 0..64 {
-                for attack_bit in 0..8 {
-                    if GEN_SLIDING[board_idx!(rank - 1, file - 1)][state] & (1 << attack_bit) != 0 {
-                        let diag = file - rank;
-                        let (rnk, fle) = if diag < 0 {
-                            (file - diag, attack_bit + 1)
-                        } else {
-                            (attack_bit + 1, diag + rank)
-                        };
+    (0..8).cartesian_product(0..8).for_each(|rf| {
+        let (file, rank) = rf;
+        for state in 0..64 {
+            for attack_bit in 0..8 {
+                if GEN_SLIDING[board_idx!(rank - 1, file - 1)][state] & (1 << attack_bit) != 0 {
+                    let diag: i32 = (file - rank) as i32;
+                    let (rnk, fle) = if diag < 0 {
+                        ((file as i32) - diag, attack_bit + 1)
+                    } else {
+                        (attack_bit + 1, diag + (rank as i32))
+                    };
 
-                        if fle > 0 && fle < 9 && rnk > 0 && rnk < 9 {
-                            attacks[board_idx!(rank, file)][state] =
-                                BIT_TABLE[board_idx!(rnk, fle)];
-                        }
+                    if fle > 0 && fle < 9 && rnk > 0 && rnk < 9 {
+                        attacks[board_idx!(rank, file)][state] =
+                            BIT_TABLE[board_idx!(rnk, fle) as usize];
                     }
                 }
             }
         }
-    }
+    });
 
     attacks
 }
