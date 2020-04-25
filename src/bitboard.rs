@@ -6,8 +6,8 @@ use derive_more::{Add, AddAssign, BitAnd, BitOr, BitXor, BitXorAssign, Sub, SubA
 use lazy_static::lazy_static;
 
 lazy_static! {
-    static ref BIT_TABLE: [Bitboard; 64] = calculate_bit_table();
-    static ref MSB_TABLE: [usize; 256] = calculate_msb_table();
+    pub static ref BIT_TABLE: [Bitboard; 64] = calculate_bit_table();
+    pub static ref MSB_TABLE: [usize; 256] = calculate_msb_table();
 }
 
 const UNIVERSE: u64 = std::u64::MAX;
@@ -25,7 +25,7 @@ const EMPTY: u64 = 0;
     AddAssign,
     SubAssign,
     BitXorAssign,
-    Default
+    Default,
 )]
 pub struct Bitboard(pub u64);
 
@@ -227,56 +227,6 @@ impl DoubleEndedIterator for BitboardIter<'_> {
     }
 }
 
-#[repr(u8)]
-#[derive(Debug, Copy, Clone)]
-pub enum Rank {
-    One,
-    Two,
-    Three,
-    Four,
-    Five,
-    Six,
-    Seven,
-    Eight,
-}
-
-#[repr(u8)]
-#[derive(Debug, Copy, Clone)]
-pub enum File {
-    A,
-    B,
-    C,
-    D,
-    E,
-    F,
-    G,
-    H,
-}
-
-///
-/// A type to represent a board position in human-readable terms
-///
-#[derive(Debug, Copy, Clone)]
-pub struct Location {
-    pub rank: Rank,
-    pub file: File,
-}
-
-impl Into<Bitboard> for Location {
-    fn into(self) -> Bitboard {
-        BIT_TABLE[((self.rank as u8 * 8) + self.file as u8) as usize]
-    }
-}
-
-impl Into<Location> for (Rank, File) {
-    fn into(self) -> Location {
-        Location {
-            rank: self.0,
-            file: self.1,
-        }
-    }
-}
-
 ///
 /// Lazy static evaluation to create a table of all bitboards
 /// that contain a single 'on' bit.
@@ -298,7 +248,7 @@ fn calculate_bit_table() -> [Bitboard; 64] {
 /// reverse bit scan
 ///
 fn calculate_msb_table() -> [usize; 256] {
-    let mut table: [usize; 256] = [0;256];
+    let mut table: [usize; 256] = [0; 256];
 
     for i in 0..256 {
         if i > 127 {

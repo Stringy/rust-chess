@@ -1,4 +1,5 @@
-use crate::bitboard::{Bitboard, Location, Rank};
+use crate::bitboard::Bitboard;
+use crate::board::{Location, Rank};
 
 #[derive(Default)]
 pub struct BitboardBuilder {
@@ -22,7 +23,8 @@ impl BitboardBuilder {
     /// # Example
     ///
     /// ```
-    /// use chess::bitboard::{Rank, Bitboard};
+    /// use chess::bitboard::Bitboard;
+    /// use chess::board::Rank;
     /// use chess::builder::BitboardBuilder;
     ///
     /// let bitboard = BitboardBuilder::new()
@@ -61,8 +63,9 @@ impl BitboardBuilder {
     /// # Examples
     ///
     /// ```
-    /// use chess::bitboard::{Rank, Bitboard, File};
+    /// use chess::bitboard::Bitboard;
     /// use chess::builder::BitboardBuilder;
+    /// use chess::board::{Rank, File};
     ///
     /// let bitboard = BitboardBuilder::new()
     ///                 .square((Rank::One, File::A))
@@ -72,10 +75,7 @@ impl BitboardBuilder {
     /// assert_eq!(bitboard, Bitboard(0x81));
     /// ```
     ///
-    pub fn square<T: Into<Location>>(
-        &mut self,
-        location: T,
-    ) -> &mut BitboardBuilder {
+    pub fn square<T: Into<Location>>(&mut self, location: T) -> &mut BitboardBuilder {
         self.bitboard ^= location.into().into();
         self
     }

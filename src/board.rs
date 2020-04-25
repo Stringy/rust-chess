@@ -1,6 +1,6 @@
 use derive_more::BitOr;
 
-use crate::bitboard::{Bitboard, Rank};
+use crate::bitboard::{Bitboard, BIT_TABLE};
 use crate::builder::BitboardBuilder;
 
 const CLASSIC_WHITE_PAWNS: Bitboard = Bitboard(0xFF00);
@@ -109,6 +109,56 @@ impl PieceValue {
             + (PieceValue::Rook as i32 * 2)
             + (PieceValue::KnightOrBishop as i32 * 4)
             + (PieceValue::Queen as i32)
+    }
+}
+
+#[repr(u8)]
+#[derive(Debug, Copy, Clone)]
+pub enum Rank {
+    One,
+    Two,
+    Three,
+    Four,
+    Five,
+    Six,
+    Seven,
+    Eight,
+}
+
+#[repr(u8)]
+#[derive(Debug, Copy, Clone)]
+pub enum File {
+    A,
+    B,
+    C,
+    D,
+    E,
+    F,
+    G,
+    H,
+}
+
+///
+/// A type to represent a board position in human-readable terms
+///
+#[derive(Debug, Copy, Clone)]
+pub struct Location {
+    pub rank: Rank,
+    pub file: File,
+}
+
+impl Into<Bitboard> for Location {
+    fn into(self) -> Bitboard {
+        BIT_TABLE[((self.rank as u8 * 8) + self.file as u8) as usize]
+    }
+}
+
+impl Into<Location> for (Rank, File) {
+    fn into(self) -> Location {
+        Location {
+            rank: self.0,
+            file: self.1,
+        }
     }
 }
 
