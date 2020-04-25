@@ -36,6 +36,18 @@ impl Debug for Bitboard {
 }
 
 impl Bitboard {
+    ///
+    /// Calculates the index of the least significant
+    /// 1 bit in the Bitboard. Uses Debruijn algorithm.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use chess::bitboard::Bitboard;
+    /// let bb = Bitboard(0b10100);
+    /// assert_eq!(bb.lsb(), 2);
+    /// ```
+    ///
     pub fn lsb(&self) -> usize {
         #[allow(non_upper_case_globals)]
         const debruijn: u64 = 0x07edd5e59a4e28c2_u64;
@@ -103,10 +115,16 @@ impl Bitboard {
         result + MSB_TABLE[n as usize]
     }
 
+    ///
+    /// Returns a new iterator for this Bitboard
+    ///
     pub fn iter(&self) -> BitboardIter {
         BitboardIter::new(self)
     }
 
+    ///
+    /// Counts the number of 1 bits in the Bitboard
+    ///
     pub fn count(&self) -> usize {
         self.iter().count()
     }
@@ -151,6 +169,19 @@ impl<'a> BitboardIter<'a> {
 impl Iterator for BitboardIter<'_> {
     type Item = usize;
 
+    ///
+    /// Implementation of next_back will iterate from
+    /// least significant bit downwards (opposite to next_back())
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use chess::bitboard::Bitboard;
+    /// let bb = Bitboard(0b1010);
+    /// let expected: Vec<usize> = vec![1, 3];
+    /// assert_eq!(bb.iter().collect::<Vec<usize>>(), expected);
+    /// ```
+    ///
     fn next(&mut self) -> Option<Self::Item> {
         // copy of self.0 with bits that haven't been processed yet
         // TODO: investigate whether we can do away with this copy
