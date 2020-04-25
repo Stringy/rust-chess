@@ -13,3 +13,14 @@ lazy_static = "1.4.0"
 [[bin]]
 name = "gen-board-consts"
 path = "tools/gen_board_consts.rs"
+
+[[bin]]
+name = "chess"
+path = "cmd/chess.rs"
+
+[dev-dependencies]
+criterion = "0.3.1"
+
+[[bench]]
+name = "benchmarks"
+harness = false
