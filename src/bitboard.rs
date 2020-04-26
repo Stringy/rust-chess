@@ -2,7 +2,7 @@ use std::fmt;
 use std::fmt::{Debug, Formatter};
 
 use derive_more::{
-    Add, AddAssign, BitAnd, BitOr, BitOrAssign, BitXor, BitXorAssign, Sub, SubAssign,
+    Add, AddAssign, BitAnd, BitOr, BitOrAssign, BitXor, BitXorAssign, Not, Sub, SubAssign,
 };
 
 use lazy_static::lazy_static;
@@ -13,9 +13,22 @@ lazy_static! {
 }
 
 #[allow(dead_code)]
-const UNIVERSE: u64 = std::u64::MAX;
-const EMPTY: u64 = 0;
+pub(crate) const UNIVERSE: Bitboard = Bitboard(std::u64::MAX);
+pub(crate) const EMPTY: Bitboard = Bitboard(0);
 
+///
+/// Bitboards are a unsigned 64 bit integer
+/// used to represent the 64 squares of a chess board
+///
+/// By combining lots of bitboards into a board representation
+/// (one per piece type, one for occupied squares, etc) you can
+/// very quickly generate chess moves.
+///
+/// The bit order used in this representation is little endian,
+/// Rank-File mapping.
+/// i.e the A1 square is the least significant bit and the H8 square is
+///     the most significant bit.
+///
 #[derive(
     Copy,
     Clone,
@@ -29,22 +42,23 @@ const EMPTY: u64 = 0;
     AddAssign,
     SubAssign,
     BitXorAssign,
+    Not,
     Default,
 )]
 pub struct Bitboard(pub u64);
 
 impl Debug for Bitboard {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        for i in 0..64 {
-            if i > 0 && i % 8 == 0 {
-                write!(f, "\n")?;
+        for i in (8..=64).step_by(8) {
+            let file: u8 = ((self.0 & (0xFFu64 << (64 - i) as u64)) >> (64 - i) as u64) as u8;
+            for j in (0u8..8).rev() {
+                if file & (1 << j) == 0 {
+                    write!(f, " 0")?;
+                } else {
+                    write!(f, " 1")?;
+                }
             }
-
-            if self.0 & (1 << i) != 0 {
-                write!(f, "1 ")?;
-            } else {
-                write!(f, "0 ")?;
-            }
+            writeln!(f)?;
         }
 
         Ok(())
@@ -178,7 +192,7 @@ impl<'a> BitboardIter<'a> {
     /// * `bb` - a reference to a bitboard to iterate over
     ///
     pub fn new(bb: &'a Bitboard) -> Self {
-        BitboardIter(bb, EMPTY.into())
+        BitboardIter(bb, EMPTY)
     }
 }
 

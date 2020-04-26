@@ -16,6 +16,73 @@ const CLASSIC_BLACK_BISHOPS: Bitboard = Bitboard(0x2400000000000000);
 const CLASSIC_BLACK_QUEEN: Bitboard = Bitboard(0x800000000000000);
 const CLASSIC_BLACK_KING: Bitboard = Bitboard(0x1000000000000000);
 
+const CLASSIC_PIECES: [Piece; 64] = [
+    Piece::WhiteRook,
+    Piece::WhiteKnight,
+    Piece::WhiteBishop,
+    Piece::WhiteQueen,
+    Piece::WhiteKing,
+    Piece::WhiteBishop,
+    Piece::WhiteKnight,
+    Piece::WhiteRook,
+    Piece::WhitePawn,
+    Piece::WhitePawn,
+    Piece::WhitePawn,
+    Piece::WhitePawn,
+    Piece::WhitePawn,
+    Piece::WhitePawn,
+    Piece::WhitePawn,
+    Piece::WhitePawn,
+    Piece::Empty,
+    Piece::Empty,
+    Piece::Empty,
+    Piece::Empty,
+    Piece::Empty,
+    Piece::Empty,
+    Piece::Empty,
+    Piece::Empty,
+    Piece::Empty,
+    Piece::Empty,
+    Piece::Empty,
+    Piece::Empty,
+    Piece::Empty,
+    Piece::Empty,
+    Piece::Empty,
+    Piece::Empty,
+    Piece::Empty,
+    Piece::Empty,
+    Piece::Empty,
+    Piece::Empty,
+    Piece::Empty,
+    Piece::Empty,
+    Piece::Empty,
+    Piece::Empty,
+    Piece::Empty,
+    Piece::Empty,
+    Piece::Empty,
+    Piece::Empty,
+    Piece::Empty,
+    Piece::Empty,
+    Piece::Empty,
+    Piece::Empty,
+    Piece::BlackPawn,
+    Piece::BlackPawn,
+    Piece::BlackPawn,
+    Piece::BlackPawn,
+    Piece::BlackPawn,
+    Piece::BlackPawn,
+    Piece::BlackPawn,
+    Piece::BlackPawn,
+    Piece::BlackRook,
+    Piece::BlackKnight,
+    Piece::BlackBishop,
+    Piece::BlackKing,
+    Piece::BlackQueen,
+    Piece::BlackBishop,
+    Piece::BlackKnight,
+    Piece::BlackRook,
+];
+
 ///
 /// Can be used to get the index of an arbitrary
 /// Location on the board (without having to go via board::Location)
@@ -27,7 +94,7 @@ macro_rules! board_idx {
     };
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Colour {
     Black,
     White,
@@ -61,6 +128,7 @@ impl Default for Castle {
 /// `[ 1 bit colour ][ 1 bit sliding ][ 2 bit designation ]`
 ///
 #[repr(u8)]
+#[derive(PartialEq, Copy, Debug, Clone)]
 pub enum Piece {
     Empty = 0,
     WhitePawn = 0b0001,
@@ -124,7 +192,7 @@ impl PieceValue {
 }
 
 #[repr(u8)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub enum Rank {
     One,
     Two,
@@ -134,6 +202,28 @@ pub enum Rank {
     Six,
     Seven,
     Eight,
+}
+
+impl From<usize> for Rank {
+    fn from(n: usize) -> Self {
+        #[rustfmt::skip]
+        const RANKS: [Rank; 64] = [
+            Rank::One, Rank::One, Rank::One, Rank::One, Rank::One, Rank::One, Rank::One, Rank::One,
+            Rank::Two, Rank::Two, Rank::Two, Rank::Two, Rank::Two, Rank::Two, Rank::Two, Rank::Two,
+            Rank::Three, Rank::Three, Rank::Three, Rank::Three, Rank::Three, Rank::Three, Rank::Three, Rank::Three,
+            Rank::Four, Rank::Four, Rank::Four, Rank::Four, Rank::Four, Rank::Four, Rank::Four, Rank::Four,
+            Rank::Five, Rank::Five, Rank::Five, Rank::Five, Rank::Five, Rank::Five, Rank::Five, Rank::Five,
+            Rank::Six, Rank::Six, Rank::Six, Rank::Six, Rank::Six, Rank::Six, Rank::Six, Rank::Six,
+            Rank::Seven, Rank::Seven, Rank::Seven, Rank::Seven, Rank::Seven, Rank::Seven, Rank::Seven, Rank::Seven,
+            Rank::Eight, Rank::Eight, Rank::Eight, Rank::Eight, Rank::Eight, Rank::Eight, Rank::Eight, Rank::Eight,
+        ];
+
+        if n < 64 {
+            RANKS[n]
+        } else {
+            panic!("invalid index: {}", n)
+        }
+    }
 }
 
 impl From<u8> for Rank {
@@ -153,7 +243,7 @@ impl From<u8> for Rank {
 }
 
 #[repr(u8)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub enum File {
     A,
     B,
@@ -163,6 +253,28 @@ pub enum File {
     F,
     G,
     H,
+}
+
+impl From<usize> for File {
+    fn from(n: usize) -> Self {
+        #[rustfmt::skip]
+        const FILES: [File; 64] = [
+            File::A, File::B, File::C, File::D, File::E, File::F, File::G, File::H,
+            File::A, File::B, File::C, File::D, File::E, File::F, File::G, File::H,
+            File::A, File::B, File::C, File::D, File::E, File::F, File::G, File::H,
+            File::A, File::B, File::C, File::D, File::E, File::F, File::G, File::H,
+            File::A, File::B, File::C, File::D, File::E, File::F, File::G, File::H,
+            File::A, File::B, File::C, File::D, File::E, File::F, File::G, File::H,
+            File::A, File::B, File::C, File::D, File::E, File::F, File::G, File::H,
+            File::A, File::B, File::C, File::D, File::E, File::F, File::G, File::H,
+        ];
+
+        if n < 64 {
+            FILES[n]
+        } else {
+            panic!("invalid index: {}", n)
+        }
+    }
 }
 
 impl From<u8> for File {
@@ -196,11 +308,11 @@ impl Into<Bitboard> for Location {
     }
 }
 
-impl Into<Location> for (Rank, File) {
-    fn into(self) -> Location {
+impl From<(Rank, File)> for Location {
+    fn from(l: (Rank, File)) -> Self {
         Location {
-            rank: self.0,
-            file: self.1,
+            rank: l.0,
+            file: l.1,
         }
     }
 }
@@ -214,12 +326,12 @@ impl Into<Location> for (u8, u8) {
     }
 }
 
-#[derive(Default, Debug)]
 pub struct Board {
     pub white_pieces: Bitboard,
     pub black_pieces: Bitboard,
 
     pub occupied: Bitboard,
+    pub pieces: [Piece; 64],
 
     pub white_pawns: Bitboard,
     pub white_rooks: Bitboard,
@@ -275,6 +387,48 @@ impl Board {
     }
 
     ///
+    /// Creats a board with no pieces in (for custom board creation)
+    ///
+    pub fn empty() -> Self {
+        Board {
+            white_pieces: Default::default(),
+            black_pieces: Default::default(),
+            occupied: Default::default(),
+            pieces: [Piece::Empty; 64],
+            white_pawns: Default::default(),
+            white_rooks: Default::default(),
+            white_knights: Default::default(),
+            white_bishops: Default::default(),
+            white_queens: Default::default(),
+            white_king: Default::default(),
+            black_pawns: Default::default(),
+            black_rooks: Default::default(),
+            black_knights: Default::default(),
+            black_bishops: Default::default(),
+            black_queens: Default::default(),
+            black_king: Default::default(),
+            next_move: Default::default(),
+            white_castle: Default::default(),
+            black_castle: Default::default(),
+            move_count: 0,
+            white_pawns_count: 0,
+            white_rooks_count: 0,
+            white_knights_count: 0,
+            white_bishops_count: 0,
+            white_queens_count: 0,
+            white_king_count: 0,
+            black_pawns_count: 0,
+            black_rooks_count: 0,
+            black_knights_count: 0,
+            black_bishops_count: 0,
+            black_queens_count: 0,
+            black_king_count: 0,
+            white_material: 0,
+            black_material: 0,
+        }
+    }
+
+    ///
     /// Constructs a chess board based on the classic layout
     ///
     fn new_classic() -> Self {
@@ -291,6 +445,8 @@ impl Board {
             white_pieces,
             black_pieces,
             occupied: white_pieces | black_pieces,
+
+            pieces: CLASSIC_PIECES,
 
             white_pawns: CLASSIC_WHITE_PAWNS,
             white_rooks: CLASSIC_WHITE_ROOKS,

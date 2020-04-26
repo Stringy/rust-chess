@@ -48,7 +48,7 @@ impl BitboardBuilder {
         self
     }
 
-    pub fn file<'a>(&'a mut self, _bits: u8) -> &'a mut BitboardBuilder {
+    pub fn file(&mut self, _bits: u8) -> &mut BitboardBuilder {
         // TODO: is this even useful?
         unimplemented!();
     }

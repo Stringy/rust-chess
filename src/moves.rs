@@ -1,5 +1,7 @@
 use crate::board::Piece;
 use derive_more::{BitAnd, BitAndAssign, BitOr, BitOrAssign};
+use std::fmt;
+use std::fmt::{Debug, Formatter};
 
 ///
 /// A move structure encapsulates information about a given move
@@ -12,10 +14,39 @@ use derive_more::{BitAnd, BitAndAssign, BitOr, BitOrAssign};
 /// * 4 bits captured piece
 /// * 4 bits promotion piece
 ///
-#[derive(Debug, Copy, Clone, BitAnd, BitAndAssign, BitOr, BitOrAssign)]
-pub struct Move(u32);
+#[derive(Copy, Clone, BitAnd, BitAndAssign, BitOr, BitOrAssign)]
+pub struct Move(pub u32);
+
+impl Debug for Move {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "(piece: {:?}, to: {}, from: {}, cap: {:?}, promo: {:?})",
+            self.piece(),
+            self.to(),
+            self.from(),
+            self.capture(),
+            self.promotion()
+        )
+    }
+}
 
 impl Move {
+    pub fn new(
+        piece: Piece,
+        from: usize,
+        to: usize,
+        capture: Option<Piece>,
+        promo: Option<Piece>,
+    ) -> Self {
+        MoveBuilder::new()
+            .piece(piece)
+            .from(from)
+            .to(to)
+            .capture(capture.unwrap_or(Piece::Empty))
+            .promote(promo.unwrap_or(Piece::Empty))
+            .build()
+    }
     ///
     /// Retrieves the from index from the move.
     /// Returned as a usize to allow for easier indexing
@@ -29,21 +60,21 @@ impl Move {
     /// Returned as a usize to allow for easier indexing
     ///
     pub fn to(&self) -> usize {
-        (self.0 & 0x00000fc0) as usize
+        ((self.0 & 0x00000fc0) >> 6) as usize
     }
 
     ///
     /// Retrieves the moving piece from the move
     ///
     pub fn piece(&self) -> Piece {
-        ((self.0 & 0x0000f000) as u8).into()
+        (((self.0 & 0x0000f000) >> 12) as u8).into()
     }
 
     ///
     /// Retrieves the captured piece from the move
     ///
     pub fn capture(&self) -> Option<Piece> {
-        let n = (self.0 & 0x000f0000) as u8;
+        let n = ((self.0 & 0x000f0000) >> 16) as u8;
         if n == 0 {
             None
         } else {
@@ -55,7 +86,7 @@ impl Move {
     /// Retrieves the promoted piece from the move
     ///
     pub fn promotion(&self) -> Option<Piece> {
-        let n = (self.0 & 0x00f00000) as u8;
+        let n = ((self.0 & 0x00f00000) >> 20) as u8;
         if n == 0 {
             None
         } else {
@@ -96,6 +127,9 @@ impl Move {
 pub struct MoveBuilder(Move);
 
 impl MoveBuilder {
+    pub fn new() -> Self {
+        MoveBuilder(Move(0))
+    }
     ///
     /// Returns the built move
     ///
@@ -106,7 +140,7 @@ impl MoveBuilder {
     ///
     /// Sets the from index in the move
     ///
-    pub fn from(&mut self, f: u8) -> &mut MoveBuilder {
+    pub fn from(&mut self, f: usize) -> &mut MoveBuilder {
         self.0 &= Move(0xffffffc0);
         self.0 |= Move(f as u32 & 0x0000003f);
         self
@@ -115,9 +149,9 @@ impl MoveBuilder {
     ///
     /// Sets the to index in the move
     ///
-    pub fn to(&mut self, t: u8) -> &mut MoveBuilder {
+    pub fn to(&mut self, t: usize) -> &mut MoveBuilder {
         self.0 &= Move(0xfffff03f);
-        self.0 |= Move((t as u32 & 0x00000fc0) << 6);
+        self.0 |= Move(((t as u32) << 6) & 0x00000fc0);
         self
     }
 
@@ -126,7 +160,7 @@ impl MoveBuilder {
     ///
     pub fn piece(&mut self, p: Piece) -> &mut MoveBuilder {
         self.0 &= Move(0xffff0fff);
-        self.0 |= Move(p as u32 & 0x0000f000);
+        self.0 |= Move(((p as u32) << 12) & 0x0000f000);
         self
     }
 
@@ -135,7 +169,7 @@ impl MoveBuilder {
     ///
     pub fn capture(&mut self, p: Piece) -> &mut MoveBuilder {
         self.0 &= Move(0xfff0ffff);
-        self.0 |= Move(p as u32 & 0x000f0000);
+        self.0 |= Move(((p as u32) << 16) & 0x000f0000);
         self
     }
 
@@ -144,7 +178,43 @@ impl MoveBuilder {
     ///
     pub fn promote(&mut self, p: Piece) -> &mut MoveBuilder {
         self.0 &= Move(0xff0fffff);
-        self.0 |= Move(p as u32 & 0x00f00000);
+        self.0 |= Move(((p as u32) << 20) & 0x00f00000);
         self
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_move_construction() {
+        let mov = Move::new(
+            Piece::WhiteKnight,
+            10,
+            20,
+            Some(Piece::BlackBishop),
+            Some(Piece::WhiteQueen),
+        );
+
+        assert_eq!(mov.piece(), Piece::WhiteKnight);
+        assert_eq!(mov.from(), 10);
+        assert_eq!(mov.to(), 20);
+        assert_eq!(mov.capture().unwrap_or(Piece::Empty), Piece::BlackBishop);
+        assert_eq!(mov.promotion().unwrap_or(Piece::Empty), Piece::WhiteQueen);
+    }
+
+    #[test]
+    fn test_move_builder_promotion() {
+        let m = MoveBuilder::new().promote(Piece::WhiteKnight).build();
+        assert!(m.is_promotion());
+        assert_eq!(m.promotion().unwrap_or(Piece::Empty), Piece::WhiteKnight);
+    }
+
+    #[test]
+    fn test_move_builder_capture() {
+        let m = MoveBuilder::new().capture(Piece::WhiteKnight).build();
+        assert!(m.is_capture());
+        assert_eq!(m.capture().unwrap_or(Piece::Empty), Piece::WhiteKnight);
     }
 }

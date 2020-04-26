@@ -4,6 +4,7 @@ extern crate lazy_static;
 pub mod bitboard;
 pub mod board;
 pub mod builder;
+pub mod generate;
 pub mod moves;
 
 mod masks;
