@@ -12,6 +12,7 @@ lazy_static! {
     pub static ref MSB_TABLE: [usize; 256] = calculate_msb_table();
 }
 
+#[allow(dead_code)]
 const UNIVERSE: u64 = std::u64::MAX;
 const EMPTY: u64 = 0;
 
@@ -34,7 +35,19 @@ pub struct Bitboard(pub u64);
 
 impl Debug for Bitboard {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "Bitboard(0x{:X?})", self.0)
+        for i in 0..64 {
+            if i > 0 && i % 8 == 0 {
+                write!(f, "\n")?;
+            }
+
+            if self.0 & (1 << i) != 0 {
+                write!(f, "1 ")?;
+            } else {
+                write!(f, "0 ")?;
+            }
+        }
+
+        Ok(())
     }
 }
 
