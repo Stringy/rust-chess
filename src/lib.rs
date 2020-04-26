@@ -6,7 +6,7 @@ pub mod board;
 pub mod builder;
 pub mod moves;
 
-mod attack_masks;
+mod masks;
 
 use itertools::Itertools;
 
