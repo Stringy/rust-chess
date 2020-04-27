@@ -1,7 +1,8 @@
-use crate::bitboard::{Bitboard, UNIVERSE};
+use crate::bitboard::{Bitboard, EMPTY, UNIVERSE};
 use crate::board::Piece::*;
 use crate::board::{Board, Colour, Piece, Rank};
 use crate::masks::pawns;
+use crate::masks::special::KNIGHT_ATTACKS;
 use crate::moves::{Move, MoveBuilder};
 
 pub struct MoveGenerator;
@@ -18,13 +19,29 @@ impl MoveGenerator {
     /// use chess::generate::MoveGenerator;
     /// let board = Board::new(Layout::Classic);
     /// let moves = MoveGenerator::all(&board);
-    /// assert_eq!(36, moves.len())
+    /// assert_eq!(moves.len(), 36);
     /// ```
     ///
     pub fn all(board: &Board) -> Vec<Move> {
         match board.next_move {
-            Colour::Black => MoveGenerator::black_pawn_moves(board),
-            Colour::White => MoveGenerator::white_pawn_moves(board),
+            Colour::Black => {
+                let mut moves = MoveGenerator::black_pawn_moves(board);
+                let target = UNIVERSE & !board.black_pieces;
+                let mut knights =
+                    MoveGenerator::knight_moves(board, board.black_knights, BlackKnight, target);
+
+                moves.append(&mut knights);
+                moves
+            }
+            Colour::White => {
+                let mut moves = MoveGenerator::white_pawn_moves(board);
+                let target = UNIVERSE & !board.white_pieces;
+                let mut knights =
+                    MoveGenerator::knight_moves(board, board.white_knights, WhiteKnight, target);
+
+                moves.append(&mut knights);
+                moves
+            }
         }
     }
 
@@ -85,11 +102,12 @@ impl MoveGenerator {
             // Calcualte the bitmask for all the moves for this given index
             let mut moves = pawns::B_PAWN_SINGLE_MOVES[from] & free_squares;
 
-            if Rank::from(from) == Rank::Seven && moves != 0.into() {
+            if Rank::from(from) == Rank::Seven && moves != EMPTY {
                 // If we're on Rank 7 then we have to be in a position
                 // to double move, because we can't move backwards
                 moves |= pawns::B_PAWN_DOUBLE_MOVES[from] & free_squares;
             }
+
             moves |= pawns::B_PAWN_ATTACKS[from] & board.white_pieces;
 
             for to in moves.iter() {
@@ -110,6 +128,31 @@ impl MoveGenerator {
                 } else {
                     all_moves.push(builder.build());
                 }
+            }
+        });
+
+        all_moves
+    }
+
+    ///
+    /// Generates all knight moves for the given colour on the board.
+    ///
+    pub fn knight_moves(
+        board: &Board,
+        pieces: Bitboard,
+        piece: Piece,
+        target: Bitboard,
+    ) -> Vec<Move> {
+        let mut all_moves = Vec::new();
+        let mut builder = MoveBuilder::new();
+
+        pieces.iter().for_each(|knight| {
+            let builder = builder.piece(piece).from(knight);
+            let moves = KNIGHT_ATTACKS[knight] & target;
+
+            for mov in moves.iter() {
+                let bb = builder.to(mov).capture(board.pieces[mov]).build();
+                all_moves.push(bb)
             }
         });
 
@@ -137,5 +180,12 @@ mod test {
 
         // expect all 8 pawns moving single and double squares
         assert_eq!(moves.len(), 16);
+    }
+
+    #[test]
+    fn test_all() {
+        let board = Board::new(Layout::Classic);
+        let moves = MoveGenerator::all(&board);
+        assert_eq!(moves.len(), 20);
     }
 }
