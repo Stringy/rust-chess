@@ -220,39 +220,68 @@ impl<'a> MoveGenerator<'a> {
     ///
     /// Generates all knight moves for a generic position on the board
     ///
+    #[inline]
     fn knight_gen(gen: &MoveGenerator, from: usize) -> Bitboard {
         KNIGHT_ATTACKS[from] & gen.target
     }
 
+    ///
+    /// Generates all bishop moves for a generic position on the board
+    ///
+    #[inline]
     fn bishop_gen(mg: &MoveGenerator, from: usize) -> Bitboard {
         MoveGenerator::a1h8_gen(mg, from) | MoveGenerator::a8h1_gen(mg, from)
     }
 
+    ///
+    /// Generates all rook moves for a generic position on the board
+    ///
+    #[inline]
     fn rook_gen(mg: &MoveGenerator, from: usize) -> Bitboard {
         MoveGenerator::rank_gen(mg, from) | MoveGenerator::file_gen(mg, from)
     }
 
+    ///
+    /// Generates all queen moves for a generic position on the board
+    ///
+    #[inline]
     fn queen_gen(mg: &MoveGenerator, from: usize) -> Bitboard {
         MoveGenerator::rook_gen(mg, from) | MoveGenerator::bishop_gen(mg, from)
     }
 
+    ///
+    /// Generates all rank moves for a generic position on the board
+    ///
+    #[inline]
     fn rank_gen(mg: &MoveGenerator, from: usize) -> Bitboard {
         let n: usize = ((mg.board.occupied & RANK_MASKS[from]) >> RANK_SHIFT[from]).0 as usize;
         RANK_ATTACKS[from][n] & mg.target
     }
 
+    ///
+    /// Generates all file moves for a generic position on the board
+    ///
+    #[inline]
     fn file_gen(mg: &MoveGenerator, from: usize) -> Bitboard {
         let mask = ((mg.board.occupied & FILE_MASKS[from]) * FILE_MAGIC[from]) >> 57;
         let n = mask.0 as usize;
         FILE_ATTACKS[from][n] & mg.target
     }
 
+    ///
+    /// Generates all a8h1 diagonal moves for a generic position on the board
+    ///
+    #[inline]
     fn a8h1_gen(mg: &MoveGenerator, from: usize) -> Bitboard {
         let mask = ((mg.board.occupied & A8H1_MASK[from]) * A8H1_MAGIC[from]) >> 57;
         let n = mask.0 as usize;
         A8H1_ATTACKS[from][n] & mg.target
     }
 
+    ///
+    /// Generates all a1h8 diagonal moves for a generic position on the board
+    ///
+    #[inline]
     fn a1h8_gen(mg: &MoveGenerator, from: usize) -> Bitboard {
         let n = (((mg.board.occupied & A1H8_MASK[from]) * A1H8_MAGIC[from]) >> 57).0 as usize;
         A1H8_ATTACKS[from][n] & mg.target
