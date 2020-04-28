@@ -10,6 +10,8 @@ use crate::masks::special::KNIGHT_ATTACKS;
 use crate::masks::{pawns, RANK_SHIFT};
 use crate::moves::{Move, MoveBuilder};
 
+const MAX_CHESS_MOVES: usize = 218;
+
 pub struct MoveGenerator<'a> {
     board: &'a Board,
     target: Bitboard,
@@ -40,59 +42,41 @@ impl<'a> MoveGenerator<'a> {
     /// let board = Board::new(Layout::Classic);
     /// let generator = MoveGenerator::new(&board);
     /// let moves = generator.all();
-    /// assert_eq!(moves.len(), 36);
+    /// assert_eq!(moves.len(), 20);
     /// ```
     ///
     pub fn all(&self) -> Vec<Move> {
+        let mut moves = Vec::with_capacity(MAX_CHESS_MOVES);
+
         match self.board.next_move {
-            Colour::Black => {
-                let mut moves = self.black_pawns();
-                let mut knights = self.knights();
-                let mut bishops = self.bishops();
-                let mut rooks = self.rooks();
-                let mut queens = self.queens();
-
-                moves.append(&mut knights);
-                moves.append(&mut bishops);
-                moves.append(&mut rooks);
-                moves.append(&mut queens);
-
-                moves
-            }
-            Colour::White => {
-                let mut moves = self.white_pawns();
-                let mut knights = self.knights();
-                let mut bishops = self.bishops();
-                let mut rooks = self.rooks();
-                let mut queens = self.queens();
-
-                moves.append(&mut knights);
-                moves.append(&mut bishops);
-                moves.append(&mut rooks);
-                moves.append(&mut queens);
-
-                moves
-            }
+            Colour::Black => self.black_pawns(&mut moves),
+            Colour::White => self.white_pawns(&mut moves),
         }
+
+        self.knights(&mut moves);
+        self.bishops(&mut moves);
+        self.rooks(&mut moves);
+        self.queens(&mut moves);
+
+        moves.shrink_to_fit();
+        moves.clone()
     }
 
     ///
     /// Generates all the white pawn moves for the current
     /// board.
     ///
-    pub fn white_pawns(&self) -> Vec<Move> {
+    fn white_pawns(&self, all_moves: &mut Vec<Move>) {
         let pawns = self.board.white_pawns;
-        let free_squares = UNIVERSE & !self.board.occupied;
-        let mut all_moves = Vec::new();
 
         pawns.iter().for_each(|from| {
             // Calculate the bitmask for all the moves for this given index
-            let mut moves = pawns::W_PAWN_SINGLE_MOVES[from] & free_squares;
+            let mut moves = pawns::W_PAWN_SINGLE_MOVES[from] & self.free;
 
             if Rank::from(from) == Rank::Two && moves != 0.into() {
                 // If we're on Rank 7 then we have to be in a position
                 // to double move, because we can't move backwards
-                moves |= pawns::W_PAWN_DOUBLE_MOVES[from] & free_squares;
+                moves |= pawns::W_PAWN_DOUBLE_MOVES[from] & self.free;
             }
             moves |= pawns::W_PAWN_ATTACKS[from] & self.board.black_pieces;
 
@@ -116,27 +100,23 @@ impl<'a> MoveGenerator<'a> {
                 }
             }
         });
-
-        all_moves
     }
 
     ///
     /// Generates all the black pawn moves for the current
     /// Board
     ///
-    pub fn black_pawns(&self) -> Vec<Move> {
+    fn black_pawns(&self, all_moves: &mut Vec<Move>) {
         let pawns = self.board.black_pawns;
-        let free_squares = UNIVERSE & !self.board.occupied;
-        let mut all_moves = Vec::new();
 
         pawns.iter().for_each(|from| {
             // Calcualte the bitmask for all the moves for this given index
-            let mut moves = pawns::B_PAWN_SINGLE_MOVES[from] & free_squares;
+            let mut moves = pawns::B_PAWN_SINGLE_MOVES[from] & self.free;
 
             if Rank::from(from) == Rank::Seven && moves != EMPTY {
                 // If we're on Rank 7 then we have to be in a position
                 // to double move, because we can't move backwards
-                moves |= pawns::B_PAWN_DOUBLE_MOVES[from] & free_squares;
+                moves |= pawns::B_PAWN_DOUBLE_MOVES[from] & self.free;
             }
 
             moves |= pawns::B_PAWN_ATTACKS[from] & self.board.white_pieces;
@@ -161,56 +141,54 @@ impl<'a> MoveGenerator<'a> {
                 }
             }
         });
-
-        all_moves
     }
 
     ///
     /// Generates all knight moves for the current board state
     ///
-    pub fn knights(&self) -> Vec<Move> {
+    fn knights(&self, moves: &mut Vec<Move>) {
         let (piece, pieces) = match self.board.next_move {
             Colour::White => (WhiteKnight, self.board.white_knights),
             Colour::Black => (BlackKnight, self.board.black_knights),
         };
 
-        self.generate_moves(piece, pieces, MoveGenerator::knight_gen)
+        self.generate_moves(piece, pieces, MoveGenerator::knight_gen, moves)
     }
 
     ///
     /// Generates all bishop moves for the current board state
     ///
-    pub fn bishops(&self) -> Vec<Move> {
+    fn bishops(&self, moves: &mut Vec<Move>) {
         let (piece, pieces) = match self.board.next_move {
             Colour::White => (WhiteBishop, self.board.white_bishops),
             Colour::Black => (BlackBishop, self.board.black_bishops),
         };
 
-        self.generate_moves(piece, pieces, MoveGenerator::bishop_gen)
+        self.generate_moves(piece, pieces, MoveGenerator::bishop_gen, moves)
     }
 
     ///
     /// Generates all rooks moves for the current board state
     ///
-    pub fn rooks(&self) -> Vec<Move> {
+    fn rooks(&self, moves: &mut Vec<Move>) {
         let (piece, pieces) = match self.board.next_move {
             Colour::White => (WhiteRook, self.board.white_rooks),
             Colour::Black => (BlackRook, self.board.black_rooks),
         };
 
-        self.generate_moves(piece, pieces, MoveGenerator::rook_gen)
+        self.generate_moves(piece, pieces, MoveGenerator::rook_gen, moves)
     }
 
     ///
     /// Generates all queens moves for the current board state
     ///
-    pub fn queens(&self) -> Vec<Move> {
+    fn queens(&self, moves: &mut Vec<Move>) {
         let (piece, pieces) = match self.board.next_move {
             Colour::White => (WhiteQueen, self.board.white_queens),
             Colour::Black => (BlackQueen, self.board.black_queens),
         };
 
-        self.generate_moves(piece, pieces, MoveGenerator::queen_gen)
+        self.generate_moves(piece, pieces, MoveGenerator::queen_gen, moves)
     }
 
     ///
@@ -222,9 +200,8 @@ impl<'a> MoveGenerator<'a> {
         piece: Piece,
         pieces: Bitboard,
         generator: fn(&MoveGenerator, usize) -> Bitboard,
-    ) -> Vec<Move> {
-        let mut all_moves = Vec::new();
-
+        all_moves: &mut Vec<Move>,
+    ) {
         pieces.iter().for_each(|from| {
             let moves = generator(self, from);
             moves.iter().for_each(|to| {
@@ -238,8 +215,6 @@ impl<'a> MoveGenerator<'a> {
                 all_moves.push(mov);
             });
         });
-
-        all_moves
     }
 
     ///
@@ -288,25 +263,6 @@ impl<'a> MoveGenerator<'a> {
 mod test {
     use super::*;
     use crate::board::Layout;
-
-    #[test]
-    fn test_white_pawn_moves_classic_start() {
-        let board = Board::new(Layout::Classic);
-        let generator = MoveGenerator::new(&board);
-        let moves = generator.white_pawns();
-        // expect all 8 pawns moving single and double squares
-        assert_eq!(moves.len(), 16);
-    }
-
-    #[test]
-    fn test_black_pawn_moves_classic_start() {
-        let board = Board::new(Layout::Classic);
-        let generator = MoveGenerator::new(&board);
-        let moves = generator.black_pawns();
-
-        // expect all 8 pawns moving single and double squares
-        assert_eq!(moves.len(), 16);
-    }
 
     #[test]
     fn test_all() {
