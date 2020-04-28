@@ -12,7 +12,8 @@ fn test_white_pawns_promotion() {
     board.white_pawns = BitboardBuilder::new().rank(Rank::Seven, 0b0001000).board();
     board.occupied = board.white_pieces;
 
-    let moves = MoveGenerator::white_pawn_moves(&board);
+    let mg = MoveGenerator::new(&board);
+    let moves = mg.white_pawns();
     // expect one promotion for each of Queen, Knight, Bishop, and Rook
     #[rustfmt::skip]
     let expected = [

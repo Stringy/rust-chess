@@ -2,10 +2,11 @@ use std::fmt;
 use std::fmt::{Debug, Formatter};
 
 use derive_more::{
-    Add, AddAssign, BitAnd, BitOr, BitOrAssign, BitXor, BitXorAssign, Not, Sub, SubAssign,
+    Add, AddAssign, BitAnd, BitOr, BitOrAssign, BitXor, BitXorAssign, Mul, Not, Shr, Sub, SubAssign,
 };
 
 use lazy_static::lazy_static;
+use std::ops::{BitAnd, Mul};
 
 lazy_static! {
     pub static ref BIT_TABLE: [Bitboard; 64] = calculate_bit_table();
@@ -43,9 +44,19 @@ pub(crate) const EMPTY: Bitboard = Bitboard(0);
     SubAssign,
     BitXorAssign,
     Not,
+    Shr,
+    Mul,
     Default,
 )]
 pub struct Bitboard(pub u64);
+
+impl Mul for Bitboard {
+    type Output = Bitboard;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        Self(rhs.0.wrapping_mul(rhs.0))
+    }
+}
 
 impl Debug for Bitboard {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
